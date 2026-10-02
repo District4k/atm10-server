@@ -1,0 +1,47 @@
+name: Deploy prod
+
+on:
+  push:
+    branches: [prod]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+jobs:
+  release-overlays:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build overlay zips
+        run: |
+          chmod +x scripts/*.sh
+          sudo apt-get update -y && sudo apt-get install -y rsync zip
+          ./scripts/build-overlays.sh
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: prod-${{ github.run_number }}
+          name: prod ${{ github.run_number }}
+          files: |
+            dist/client-overlay.zip
+            dist/server-overlay.zip
+            dist/VERSION
+          generate_release_notes: true
+
+  deploy-live:
+    if: vars.ENABLE_LIVE_DEPLOY == 'true'
+    needs: release-overlays
+    runs-on: [self-hosted, minecraft-prod]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: prod
+      - name: Restart live server with new prod
+        run: |
+          chmod +x scripts/*.sh
+          ./scripts/deploy.sh

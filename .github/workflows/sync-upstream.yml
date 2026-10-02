@@ -1,0 +1,41 @@
+name: Sync ATM-10 into upgrade
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout upgrade
+        uses: actions/checkout@v4
+        with:
+          ref: upgrade
+          fetch-depth: 0
+
+      - name: Merge AllTheMods/ATM-10 main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add atm https://github.com/AllTheMods/ATM-10.git
+          git fetch atm main
+          if git merge-base --is-ancestor atm/main HEAD; then
+            echo "upgrade already contains ATM-10 main"
+            exit 0
+          fi
+          if git merge atm/main -m "chore: merge AllTheMods/ATM-10 main into upgrade"; then
+            git push origin HEAD:upgrade
+          else
+            echo "::error::Merge conflict with ATM-10. Fix on the upgrade branch locally, then push."
+            git merge --abort || true
+            exit 1
+          fi

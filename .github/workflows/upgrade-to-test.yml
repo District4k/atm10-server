@@ -1,0 +1,34 @@
+name: Upgrade to test
+
+on:
+  push:
+    branches: [upgrade]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: promote-upgrade
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Make scripts executable
+        run: chmod +x scripts/*.sh
+      - name: Overlay test
+        run: ./scripts/test.sh
+
+  promote-to-test:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Push upgrade SHA to test
+        run: |
+          git fetch origin test || true
+          git push origin "HEAD:test"

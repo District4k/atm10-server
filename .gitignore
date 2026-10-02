@@ -17,3 +17,18 @@ config/ftbquests/quests/lang/recovery/*.snbt
 
 # ignore already merged files
 config/ftbquests/quests/lang/**/*.snbt_merged
+
+# --- atm10-server fork (live data, binaries, local env) ---
+world/
+world_*/
+logs/
+crash-reports/
+libraries/
+*.jar
+!custom/mods/.gitkeep
+.env
+deploy.env
+client-overlay.zip
+server-overlay.zip
+dist/
+.DS_Store
