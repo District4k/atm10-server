@@ -4,6 +4,8 @@ Players should **not** download every ATM jar from this repo. Use official ATM10
 
 ## What you need
 
+Downloads use the public GitHub Releases on [District4k/atm10-server](https://github.com/District4k/atm10-server) (no login needed for the overlay zip).
+
 1. **All the Mods 10** from CurseForge / Prism — same pack version as the live server (currently **8.2**).
 2. This overlay updater (extra mods + configs from [District4k/atm10-server](https://github.com/District4k/atm10-server)).
 

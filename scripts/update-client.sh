@@ -14,8 +14,8 @@ Usage:
 Prism Launcher pre-launch command (Settings → Custom commands):
   /Users/enricokallaste/atm10-server/scripts/update-client.sh "$INST_DIR"
 
-Optional:
-  ATM10_FORK_REPO=District4k/atm10-server   (default already)
+Defaults to GitHub repo District4k/atm10-server.
+If the repo is private, set GH_TOKEN (or run while logged in with gh).
 EOF
   exit 1
 fi
@@ -25,38 +25,56 @@ if [[ ! -d "$INSTANCE" ]]; then
   exit 1
 fi
 
-# Sanity: looks like a Minecraft instance
-if [[ ! -d "$INSTANCE/mods" && ! -f "$INSTANCE/minecraftinstance.json" && ! -f "$INSTANCE/instance.cfg" ]]; then
-  echo "[client] warning: $INSTANCE does not look like a launcher instance (continuing)" >&2
-fi
-
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
+ZIP="$TMP/client-overlay.zip"
 
-API="https://api.github.com/repos/${REPO}/releases/latest"
-echo "[client] fetching latest release from $REPO"
-JSON="$(curl -fsSL "$API")" || {
-  echo "[client] could not read $API — is there a published Release yet?" >&2
-  exit 1
+download_with_gh() {
+  command -v gh >/dev/null 2>&1 || return 1
+  echo "[client] downloading via gh (authenticated)"
+  gh release download -R "$REPO" -p client-overlay.zip -D "$TMP" >/dev/null
+  # gh may name the file client-overlay.zip in TMP
+  [[ -f "$ZIP" ]] || mv "$TMP"/client-overlay.zip "$ZIP" 2>/dev/null || true
+  [[ -f "$ZIP" ]]
 }
 
-ASSET_URL="$(printf '%s' "$JSON" | python3 -c '
+download_with_curl() {
+  local api asset_url tag auth_header=()
+  api="https://api.github.com/repos/${REPO}/releases/latest"
+  if [[ -n "${GH_TOKEN:-${GITHUB_TOKEN:-}}" ]]; then
+    auth_header=(-H "Authorization: Bearer ${GH_TOKEN:-$GITHUB_TOKEN}" -H "Accept: application/vnd.github+json")
+  fi
+  echo "[client] fetching latest release from $REPO"
+  local json
+  json="$(curl -fsSL "${auth_header[@]}" "$api")" || return 1
+  asset_url="$(printf '%s' "$json" | python3 -c '
 import json,sys
 d=json.load(sys.stdin)
 assets=d.get("assets") or []
 hits=[a for a in assets if a.get("name")=="client-overlay.zip"]
 print(hits[0]["browser_download_url"] if hits else "")
 ')"
-TAG="$(printf '%s' "$JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("tag_name",""))')"
+  tag="$(printf '%s' "$json" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("tag_name",""))')"
+  [[ -n "$asset_url" ]] || return 1
+  echo "[client] downloading $tag → client-overlay.zip"
+  curl -fsSL "${auth_header[@]}" -o "$ZIP" -L "$asset_url"
+}
 
-if [[ -z "$ASSET_URL" ]]; then
-  echo "[client] latest release has no client-overlay.zip asset" >&2
-  exit 1
+if ! download_with_gh; then
+  if ! download_with_curl; then
+    cat >&2 <<EOF
+[client] could not download client-overlay.zip from $REPO
+
+If the repo is private:
+  - run: gh auth login
+  - or:  export GH_TOKEN=...   (classic token with repo scope)
+Or make the GitHub repo public so friends can update without a token.
+EOF
+    exit 1
+  fi
 fi
 
-echo "[client] downloading $TAG → client-overlay.zip"
-curl -fsSL -o "$TMP/client-overlay.zip" "$ASSET_URL"
 mkdir -p "$INSTANCE/mods" "$INSTANCE/config"
-unzip -o "$TMP/client-overlay.zip" -d "$INSTANCE"
-echo "[client] OK — overlay $TAG applied to $INSTANCE"
-echo "[client] Launch with the same ATM10 CurseForge version as the server (see VERSION in the release)."
+unzip -o "$ZIP" -d "$INSTANCE"
+echo "[client] OK — overlay applied to $INSTANCE"
+echo "[client] Use the same official ATM10 CurseForge version as the server."
