@@ -1,45 +1,146 @@
-All The Mods 10
-======
-This is the official repository and issue-tracker for All The Mods 10 1.21.1
+# ATM10 custom server (District4k)
 
-Does "All The Mods" *really* contain ALL THE MODS? No, of course not.
+Private-group fork of **[All the Mods 10](https://www.curseforge.com/minecraft/modpacks/all-the-mods-10)** (Minecraft **1.21.1**, **NeoForge**).
 
-Need Help?
-======
-When reporting an issue, please follow the templates!
+Upstream configs/KubeJS: [AllTheMods/ATM-10](https://github.com/AllTheMods/ATM-10).  
+This repo adds **extra mods**, **Docker live hosting**, **upgrade → test → prod**, and a **client overlay** so players stay in sync.
 
-|You can also find us on Discord for help<br>or just to chat as well as Reddit|
-|:------------:|
-|<a href="https://discord.gg/3paFjuRfz9"><img src="https://discordapp.com/assets/fc0b01fe10a0b8c602fb0106d8189d9b.png" alt="Join us on Discord!"  width="200" height="68"></a>|
-|<a href="https://www.reddit.com/r/allthemods"><img src="https://www.redditstatic.com/about/assets/reddit-logo.png" alt="/r/AllTheMods on Reddit"  width="200" height="67"></a>|
-<br>
+| | |
+| --- | --- |
+| Pack base | ATM10 **8.2** |
+| Custom version | See [`VERSION`](VERSION) (e.g. `8.2-custom.1`) |
+| Live host | Docker on the Mac (`atm10-live`, port **25565**) |
+| GitHub | https://github.com/District4k/atm10-server |
 
-#### Modpacks:
-+ [![All the Mods 0](http://cf.way2muchnoise.eu/372309.svg "ATM0") All The Mods 0 - ATM0](https://www.curseforge.com/minecraft/modpacks/all-the-mods-0)
-+ [![All the Mods 1](http://cf.way2muchnoise.eu/242462.svg "ATM1") All The Mods 1 - ATM1](https://www.curseforge.com/minecraft/modpacks/all-the-mods)
-+ [![All the Mods 2](http://cf.way2muchnoise.eu/253707.svg "ATM2") All The Mods 2 - ATM2](https://www.curseforge.com/minecraft/modpacks/all-the-mods-2)
-+ [![All the Mods 3](http://cf.way2muchnoise.eu/269708.svg "ATM3") All The Mods 3 - ATM3](https://www.curseforge.com/minecraft/modpacks/all-the-mods-3)
-+ [![All the Mods 3](http://cf.way2muchnoise.eu/301845.svg "ATM3R") All the Mods 3 - Remix - ATM3R](https://www.curseforge.com/minecraft/modpacks/all-the-mods-3-remix)
-+ [![All the Mods 3 Expert](http://cf.way2muchnoise.eu/325396.svg "ATM3E") All The Mods 3 - Expert - ATM3E](https://www.curseforge.com/minecraft/modpacks/all-the-mods-3-expert)
-+ [![All the Mods 4](http://cf.way2muchnoise.eu/316059.svg "ATM4") All The Mods 4 - ATM4](https://www.curseforge.com/minecraft/modpacks/all-the-mods-4)
-+ [![All the Mods 5](http://cf.way2muchnoise.eu/357494.svg "ATM5") All The Mods 5 - ATM5](https://www.curseforge.com/minecraft/modpacks/all-the-mods-5)
-+ [![All the Mods 6](http://cf.way2muchnoise.eu/381671.svg "ATM6") All The Mods 6 - ATM6](https://www.curseforge.com/minecraft/modpacks/all-the-mods-6)
-+ [![All the Mods SLOP2](http://cf.way2muchnoise.eu/432480.svg "ATMSLOP2") All the Mods - Slice of Pi2](https://www.curseforge.com/minecraft/modpacks/all-the-mods-slice-of-pi2-atm-slop2)
-+ [![All the Mods 6S](http://cf.way2muchnoise.eu/442246.svg "ATM6S") All the Mods 6 - To the Sky - ATM6Sky](https://www.curseforge.com/minecraft/modpacks/all-the-mods-6-to-the-sky-atm6s)
-+ [![All the Magic Spellbound](http://cf.way2muchnoise.eu/500199.svg "ATMSpell") All the Magic Spellbound - ATMS](https://www.curseforge.com/minecraft/modpacks/all-the-magic-spellbound)
-+ [![All the Mods 7](http://cf.way2muchnoise.eu/426926.svg "ATM7") All The Mods 7 - ATM7](https://www.curseforge.com/minecraft/modpacks/all-the-mods-7)
-+ [![All the Mods 7Sky](http://cf.way2muchnoise.eu/655739.svg "ATM7S") All the Mods 7 - To the Sky - ATM7Sky](https://www.curseforge.com/minecraft/modpacks/all-the-mods-7-to-the-sky)
-+ [![All the Mods 8](http://cf.way2muchnoise.eu/520914.svg "ATM8") All The Mods 8 - ATM8](https://www.curseforge.com/minecraft/modpacks/all-the-mods-8)
-+ [![All the Mods Gravitas](http://cf.way2muchnoise.eu/807446.svg "ATMG") All The Mods - Gravitas - ATMG](https://www.curseforge.com/minecraft/modpacks/all-the-mods-gravitas)
-+ [![All the Mods 9](http://cf.way2muchnoise.eu/715572.svg "ATM9") All The Mods 9 - ATM9](https://www.curseforge.com/minecraft/modpacks/all-the-mods-9)
-+ [![All the Mods 9 - No Frills](http://cf.way2muchnoise.eu/959010.svg "ATM9-NF") All The Mods 9 - ATM9 - No Frills](https://www.curseforge.com/minecraft/modpacks/all-the-mods-9-no-frills)
-+ [![All the Mods Gravitas²](http://cf.way2muchnoise.eu/949996.svg "ATMG²") All The Mods - Gravitas² - ATMG²](https://www.curseforge.com/minecraft/modpacks/all-the-mods-gravitas2)
-+ [![Maul The Odds](http://cf.way2muchnoise.eu/987792.svg "MTO") Maul The Odds - MTO](https://www.curseforge.com/minecraft/modpacks/maul-the-odds)
-+ [![All the Mods 9Sky](http://cf.way2muchnoise.eu/967745.svg "ATM9Sky") All The Mods 9 - To The Sky - ATM9Sky](https://www.curseforge.com/minecraft/modpacks/all-the-mods-9-to-the-sky)
-+ [![All the Mods 10](http://cf.way2muchnoise.eu/925200.svg "ATM10") All The Mods 10 - ATM10](https://www.curseforge.com/minecraft/modpacks/all-the-mods-10)
-+ [![All the Mods 10Sky](http://cf.way2muchnoise.eu/1298402.svg "ATM10Sky") All The Mods 10 - To The Sky - ATM10Sky](https://www.curseforge.com/minecraft/modpacks/all-the-mods-10-sky)
-+ [![All the Magic Arcana](http://cf.way2muchnoise.eu/1190911.svg "ATMA") All The Magic - Arcana - ATMA](https://www.curseforge.com/minecraft/modpacks/all-the-magic-arcana)
-+ [![All the Mods 10 Lite](http://cf.way2muchnoise.eu/1298400.svg "ATM10L") All The Mods 10 Lite - ATM10L](https://www.curseforge.com/minecraft/modpacks/all-the-mods-10-lite)
-+ [![All the Mons](http://cf.way2muchnoise.eu/1356598.svg "ATMons") All The Mons - ATMons](https://www.curseforge.com/minecraft/modpacks/all-the-mons)
-+ [![All The Mods 10 - Aeronautics Edition](http://cf.way2muchnoise.eu/1644918.svg "ATM10A") All The Mods 10 - Aeronautics Edition - ATM10A](https://www.curseforge.com/minecraft/modpacks/all-the-mods-10-aeronautics)
-+ [![All The Mods 11](https://cf.way2muchnoise.eu/1148445.svg "ATM11") All The Mods 11 - ATM11](https://www.curseforge.com/minecraft/modpacks/all-the-mods-11)
+---
+
+## Quick links
+
+| I want to… | Read |
+| --- | --- |
+| **Play (Windows / Prism)** | **[CLIENT.md](CLIENT.md)** |
+| Run / update the **server** | **[SERVER.md](SERVER.md)** |
+| See which **extra mods** we added | **[custom/EXTRA_MODS.md](custom/EXTRA_MODS.md)** |
+
+---
+
+## How it fits together
+
+```
+Official ATM10 8.2 (CurseForge)
+        +
+This repo’s overlay (extra mods + configs)
+        =
+What players and the live server run
+```
+
+- We do **not** re-upload the whole ATM modpack.
+- Extras live in `custom/mods/` (and optional `custom/client-mods/`).
+- On every **prod** release, GitHub publishes `client-overlay.zip` for players.
+
+```
+upgrade  →  test (checks)  →  prod
+                              ├─ GitHub Release (client/server overlay zips)
+                              └─ Docker live: wait for 0 players → cut over
+                                 (chat announces new VERSION; rollback if boot fails)
+```
+
+---
+
+## Players (client)
+
+1. Install **All the Mods 10 version 8.2** in Prism / CurseForge.
+2. Run our updater so extras download from GitHub Releases.
+3. Launch and join the server.
+
+**Windows (after ATM10 is installed):**
+
+1. Save [update-client.ps1](https://raw.githubusercontent.com/District4k/atm10-server/prod/scripts/update-client.ps1)  
+   e.g. to `C:\Games\atm10-update\update-client.ps1`
+2. Open your ATM10 instance folder in Prism/CurseForge.
+3. Run once in PowerShell (use your real instance path):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File "C:\Games\atm10-update\update-client.ps1" "C:\path\to\ATM10\instance"
+```
+
+4. Optional — Prism **Pre-launch command** (auto-update every start):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File "C:\Games\atm10-update\update-client.ps1" "$env:INST_DIR"
+```
+
+Full guide (Windows + Mac): **[CLIENT.md](CLIENT.md)**.
+
+If the server is newer than your overlay, **Better Compatibility Checker** warns on join — run the updater again.
+
+---
+
+## Host (server)
+
+### Folders (this Mac)
+
+| Path | Role |
+| --- | --- |
+| `~/atm10-instances/prod` | Live world + pack |
+| `~/atm10-instances/test` | Staging |
+| `~/atm10-stock/ServerFiles-8.2` | Official 8.2 stock (read-only) |
+| `~/atm10-server` | This git repo |
+
+### Start live (Docker Desktop on, enough RAM)
+
+```bash
+cd ~/atm10-server
+docker compose up -d --build
+docker compose logs -f minecraft
+```
+
+### After changing extras / configs
+
+```bash
+# put jars in custom/mods/, bump VERSION if you want
+git checkout upgrade
+# commit & push upgrade  →  Actions: test → prod → release + deploy
+# or locally:
+./scripts/promote-test-to-prod.sh
+```
+
+Deploy **does not kick players**. Chat announces the new version; cutover happens at **0 players**. Failed boot restores the previous pack (world kept).
+
+Details: **[SERVER.md](SERVER.md)**.
+
+---
+
+## Branches & Actions
+
+| Branch | Purpose |
+| --- | --- |
+| `upgrade` | ATM upstream merges + WIP |
+| `test` | Pack checks; then promotes to `prod` |
+| `prod` | Release overlays + live Docker cutover |
+
+Mac needs a GitHub **self-hosted runner** labeled `minecraft-prod` for automatic live deploys. Until then you can set `SKIP_LIVE_DEPLOY=true` and run Docker/deploy locally.
+
+---
+
+## Repo layout
+
+```
+custom/
+  mods/           # extra jars (gitignored; shipped via Releases)
+  client-mods/    # client-only extras
+  overrides/      # configs that win over ATM defaults
+  EXTRA_MODS.md   # list of extras
+scripts/
+  update-client.ps1 / update-client.sh
+  deploy.sh / promote-test-to-prod.sh / …
+compose.yaml      # atm10-live (+ atm10-next for pre-checks)
+VERSION           # stamped into BCC for clients
+```
+
+---
+
+## Attribution
+
+Pack content and most configs come from **All the Mods 10** by the ATM team.  
+Upstream issue tracker / pack README: [AllTheMods/ATM-10](https://github.com/AllTheMods/ATM-10).
