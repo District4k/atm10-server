@@ -6,7 +6,13 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 load_env() {
   local f
-  for f in "$ROOT/deploy.env" "$ROOT/.env"; do
+  # Checkout may not include gitignored deploy.env — also load fixed host copies.
+  for f in \
+    "$ROOT/deploy.env" \
+    "$ROOT/.env" \
+    "/Users/enricokallaste/atm10-server/deploy.env" \
+    "/Users/enricokallaste/atm10-server/.env"
+  do
     if [[ -f "$f" ]]; then
       set -a
       # shellcheck disable=SC1090

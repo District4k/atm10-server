@@ -49,8 +49,9 @@ jobs:
         run: |
           set -euo pipefail
           chmod +x scripts/*.sh docker/entrypoint.sh
-          test -f deploy.env || test -f .env || {
-            echo "Missing deploy.env/.env on the runner (LIVE_SERVER_DIR, NEXT_SERVER_DIR, SNAPSHOT_DIR)"
+          # gitignored deploy.env lives on the Mac host; deploy.sh also loads ~/atm10-server/deploy.env
+          test -f /Users/enricokallaste/atm10-server/deploy.env || test -f /Users/enricokallaste/atm10-server/.env || {
+            echo "Missing host deploy.env/.env at /Users/enricokallaste/atm10-server/"
             exit 1
           }
           docker info >/dev/null
