@@ -18,10 +18,15 @@ fi
 VERSION="$(tr -d '[:space:]' < "$ROOT/VERSION")"
 OVERRIDES="$ROOT/custom/overrides"
 
+# Always accept Minecraft EULA (also in custom/overrides/eula.txt).
+printf 'eula=true\n' > "$DEST/eula.txt"
+
 if [[ -d "$OVERRIDES" ]]; then
   echo "[overlay] rsync overrides -> $DEST"
   rsync -a --exclude 'README.md' "$OVERRIDES/" "$DEST/"
 fi
+# Re-assert after rsync in case an override was missing or wrong
+printf 'eula=true\n' > "$DEST/eula.txt"
 
 if [[ -d "$ROOT/custom/mods" ]]; then
   mkdir -p "$DEST/mods"

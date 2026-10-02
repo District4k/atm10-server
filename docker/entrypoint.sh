@@ -7,6 +7,9 @@ if [ ! -f startserver.sh ]; then
   exit 1
 fi
 
+# Always accept the Minecraft EULA so first boot / fresh mounts never prompt.
+printf 'eula=true\n' > eula.txt
+
 chmod +x startserver.sh run.sh 2>/dev/null || true
 export ATM10_RESTART="${ATM10_RESTART:-false}"
 
