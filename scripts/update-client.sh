@@ -76,5 +76,16 @@ fi
 
 mkdir -p "$INSTANCE/mods" "$INSTANCE/config"
 unzip -o "$ZIP" -d "$INSTANCE"
-echo "[client] OK — overlay applied to $INSTANCE"
-echo "[client] Use the same official ATM10 CurseForge version as the server."
+
+GLITCH="$INSTANCE/mods/GlitchCore-neoforge-1.21.1-2.1.0.2.jar"
+if [[ ! -f "$GLITCH" ]]; then
+  cat >&2 <<'EOF'
+[client] overlay did not install GlitchCore.
+Without it the server kicks with glitchcore:sync_config missing.
+The GitHub client-overlay.zip is probably configs-only — tell the host to republish.
+EOF
+  exit 1
+fi
+
+echo "[client] OK — overlay applied to $INSTANCE (GlitchCore present)"
+echo "[client] Use official ATM10 8.2 / NeoForge 21.1.251 (same as the server)."

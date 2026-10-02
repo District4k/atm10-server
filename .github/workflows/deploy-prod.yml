@@ -14,11 +14,17 @@ concurrency:
 
 jobs:
   # Client/server overlay zips for players (CurseForge pack + this overlay).
+  # Needs the 12 gitignored jars from custom/EXTRA_MODS.md — seed from the Mac host
+  # path or the `extra-mods` release asset (see scripts/seed-extra-mods.sh).
   release-overlays:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Build overlay zips
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ATM10_FORK_REPO: ${{ github.repository }}
+          ATM10_EXTRA_MODS_TAG: extra-mods
         run: |
           chmod +x scripts/*.sh
           sudo apt-get update -y && sudo apt-get install -y rsync zip

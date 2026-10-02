@@ -39,7 +39,7 @@ Prod and test are **ATM10 8.2** (464 stock mods + 12 extras = 476). GitHub ATM-1
 | `test` | Staging. After pack tests pass, git fast-forwards `prod` and `deploy.sh` starts a zero-player cutover. |
 | `prod` | Live pack. Deploy prepares `next`, waits for 0 players, then overlays live. |
 
-Do not commit worlds, logs, or `.jar` files. Put extra jars in `custom/mods/` on the machine (gitignored) or attach them to GitHub Releases.
+Do not commit worlds, logs, or `.jar` files. Put extra jars in `custom/mods/` on the machine (gitignored). Also keep GitHub Release tag **`extra-mods`** with asset **`extra-mods.zip`** (the 12 jars from `custom/EXTRA_MODS.md`) so `scripts/build-overlays.sh` / CI can seed `custom/mods/` and publish a non-empty `client-overlay.zip`.
 
 ## Your custom content
 

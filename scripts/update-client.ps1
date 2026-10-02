@@ -47,5 +47,14 @@ New-Item -ItemType Directory -Force -Path (Join-Path $Instance "config") | Out-N
 Expand-Archive -LiteralPath $zip -DestinationPath $Instance -Force
 Remove-Item -Recurse -Force $tmp
 
-Write-Host "[client] OK - overlay $($release.tag_name) applied to $Instance"
-Write-Host "[client] Use official ATM10 8.2 (same as the server), then join."
+$glitch = Join-Path $Instance "mods\GlitchCore-neoforge-1.21.1-2.1.0.2.jar"
+if (-not (Test-Path -LiteralPath $glitch)) {
+  throw @"
+[client] overlay $($release.tag_name) did not install GlitchCore.
+Without it the server kicks with glitchcore:sync_config missing.
+Re-download update-client.ps1 and try again, or tell the host the GitHub client-overlay.zip is broken.
+"@
+}
+
+Write-Host "[client] OK - overlay $($release.tag_name) applied to $Instance (GlitchCore present)"
+Write-Host "[client] Use official ATM10 8.2 / NeoForge 21.1.251 (same as the server), then join."

@@ -20,3 +20,5 @@ These 12 jars are the fork overlay. They are not in the ATM-10 **8.2** “Added 
 Jars live in `custom/mods/` (gitignored). Matching configs live in `custom/overrides/config/`.
 
 `apply-overlay.sh` copies them onto **atm10-instances/prod** and **test**.
+
+For CI / GitHub `client-overlay.zip` builds, also publish those jars as release tag `extra-mods` / asset `extra-mods.zip` (see `scripts/seed-extra-mods.sh`). Without that, overlays ship with an empty `mods/` folder and Prism clients get kicked for missing `glitchcore:sync_config`.

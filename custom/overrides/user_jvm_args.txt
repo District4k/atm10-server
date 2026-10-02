@@ -1,8 +1,7 @@
-# RAM for Docker Desktop on this Mac (~8GB container budget).
-# Raise Docker Desktop memory to 16GB+, then you can use -Xmx12G again.
+# Docker Desktop MemoryMiB=12288 on this Mac; leave ~1–2G for non-heap + Docker.
 
--Xms2G
--Xmx6G
+-Xms4G
+-Xmx10G
 -XX:+UseG1GC
 -XX:+ParallelRefProcEnabled
 -XX:MaxGCPauseMillis=200
