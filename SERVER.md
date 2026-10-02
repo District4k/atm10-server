@@ -150,7 +150,7 @@ Players connect to this Mac on port **25565**. Container name: `atm10-live`.
 1. Snapshot live **pack** (mods/config/libraries, **not** `world/`) to `prod-snapshot`.
 2. Build `prod-next`, apply overlay, boot `atm10-next` on **127.0.0.1:25566** with an empty throwaway world.
 3. If next fails health-check, **stop next and leave live running**.
-4. If next is healthy, stop next (free RAM), then poll live player count until **0** (no timeout, no force restart).
+4. If next is healthy, stop next (free RAM), then poll live until **0** players (no kick). While people are online, the live server **announces** the new `VERSION` in chat about every minute via RCON.
 5. Stop live, apply overlay onto `prod` (**world stays**), start `atm10-live`, health-check.
 6. On success: stop next. On live boot failure: restore pack from snapshot, start live again.
 

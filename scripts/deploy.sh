@@ -78,9 +78,14 @@ fi
 echo "[deploy] next healthy — stopping next to free RAM while live stays up"
 "${COMPOSE[@]}" --profile next stop -t 90 minecraft-next || true
 
+NEW_VERSION="$(tr -d '[:space:]' < "$ROOT/VERSION")"
 if live_running; then
-  echo "[deploy] next is healthy — waiting until live has 0 players"
-  "$ROOT/scripts/wait-empty.sh" "$STATUS_HOST" "$MC_PORT"
+  echo "[deploy] next is healthy — notifying players and waiting until live has 0 players"
+  "$ROOT/scripts/ensure-rcon.sh" || true
+  # RCON only applies after a restart; if already enabled, announce now. Otherwise
+  # players still see BCC version mismatch on join after cutover.
+  UPDATE_VERSION="$NEW_VERSION" "$ROOT/scripts/announce-update.sh" "$NEW_VERSION" || true
+  "$ROOT/scripts/wait-empty.sh" "$STATUS_HOST" "$MC_PORT" "$NEW_VERSION"
 else
   echo "[deploy] live container is not running — no players to wait for"
 fi

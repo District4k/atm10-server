@@ -53,3 +53,9 @@ Better Compatibility Checker uses our stamped `VERSION` (e.g. `8.2-custom.1`) so
 - Mix a different ATM10 base version than the server.
 - Hand-copy random jars without the overlay (easy to desync).
 - Replace the whole `mods` folder with a full redistributed ATM pack.
+
+## Version mismatch warning
+
+Better Compatibility Checker stamps our overlay `VERSION` (for example `8.2-custom.1`). If the **live server** already updated and your client overlay is old, you get a pack-version warning on join — run `update-client.sh` (or restart Prism so pre-launch runs) and try again.
+
+While an update is waiting to apply (players still online), the **server chat** also announces that a new version is ready and asks people to log off when convenient.

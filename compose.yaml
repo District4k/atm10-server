@@ -13,6 +13,7 @@ services:
     tty: true
     ports:
       - "${MC_BIND:-0.0.0.0}:${MC_PORT:-25565}:25565"
+      - "127.0.0.1:${RCON_PORT:-25575}:25575"
     volumes:
       - ${LIVE_SERVER_DIR:?Set LIVE_SERVER_DIR in .env or the shell}:/data
     environment:
