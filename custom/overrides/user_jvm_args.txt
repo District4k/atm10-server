@@ -1,14 +1,13 @@
-# RAM and GC for the prod/test ATM10 8.2 servers.
-# Xmx and Xms set the maximum and minimum RAM usage.
+# RAM for Docker Desktop on this Mac (~8GB container budget).
+# Raise Docker Desktop memory to 16GB+, then you can use -Xmx12G again.
 
--Xms4G
--Xmx12G
+-Xms2G
+-Xmx6G
 -XX:+UseG1GC
 -XX:+ParallelRefProcEnabled
 -XX:MaxGCPauseMillis=200
 -XX:+UnlockExperimentalVMOptions
 -XX:+DisableExplicitGC
--XX:+AlwaysPreTouch
 -XX:G1NewSizePercent=30
 -XX:G1MaxNewSizePercent=40
 -XX:G1HeapRegionSize=8M
