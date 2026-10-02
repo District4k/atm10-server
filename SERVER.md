@@ -112,11 +112,15 @@ Normal flow after setup: push (or merge) to **`upgrade`** and Actions carries it
 
 ## Clients on PCs
 
-1. Install **All the Mods 10** matching the ATM version in `VERSION` (see `config/bcc-common.toml` on `prod` after overlay).
-2. In Prism/CurseForge, set a **pre-launch command** to `scripts/update-client.sh` **or** run that script against the instance folder after each prod release.
-3. The script downloads the latest GitHub Release asset `client-overlay.zip` from `prod` and extracts it into the instance (`mods/`, `config/`, `kubejs/`, …).
+See **[CLIENT.md](CLIENT.md)** — official ATM10 + `scripts/update-client.sh` overlay (best path).
 
-Until you push to GitHub, generate a local overlay:
+Short version:
+
+1. Install **All the Mods 10** matching the server version (e.g. 8.2).
+2. Prism pre-launch: `.../atm10-server/scripts/update-client.sh "$INST_DIR"`
+3. Each prod Release ships `client-overlay.zip` with extras from `custom/`.
+
+Until GitHub has a Release, generate a local overlay:
 
 ```bash
 ./scripts/build-overlays.sh
