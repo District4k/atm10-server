@@ -8,8 +8,10 @@ Official ATM-10 on GitHub is **configs, KubeJS, datapacks** — not the CurseFor
 
 | Path | What it is |
 | --- | --- |
-| `/Users/enricokallaste/atm10-instances/prod` | **Live server**: ATM10 8.2, extra mods, world, players. Screen `atm10-prod`. |
-| `/Users/enricokallaste/atm10-instances/test` | Staging / smoke tests. Screen `atm10-test`. |
+| `/Users/enricokallaste/atm10-instances/prod` | **Live** world + pack. Docker `atm10-live` on port 25565. |
+| `/Users/enricokallaste/atm10-instances/prod-next` | Background **next** pack (throwaway world). Docker `atm10-next` on 25566. |
+| `/Users/enricokallaste/atm10-instances/prod-snapshot` | Pack snapshot for rollback (no world). |
+| `/Users/enricokallaste/atm10-instances/test` | Test overlay target (not Docker). |
 | `/Users/enricokallaste/atm10-stock/ServerFiles-8.2` | Official ATM10 8.2 pack (read-only bootstrap source). |
 | `/Users/enricokallaste/atm10-server` | Git fork + GitHub Actions. |
 
@@ -34,8 +36,8 @@ Prod and test are **ATM10 8.2** (464 stock mods + 12 extras = 476). GitHub ATM-1
 | Branch | Role |
 | --- | --- |
 | `upgrade` | Incoming ATM-10 updates + your WIP. GitHub Action promotes to `test`. |
-| `test` | Staging. After tests pass, Action promotes to `prod`. |
-| `prod` | Live pack. Action uploads overlays and restarts the Minecraft server. |
+| `test` | Staging. After pack tests pass, git fast-forwards `prod` and `deploy.sh` starts a zero-player cutover. |
+| `prod` | Live pack. Deploy prepares `next`, waits for 0 players, then overlays live. |
 
 Do not commit worlds, logs, or `.jar` files. Put extra jars in `custom/mods/` on the machine (gitignored) or attach them to GitHub Releases.
 
@@ -68,31 +70,45 @@ git push origin upgrade
 
 A scheduled workflow also tries this merge. If Git reports conflicts, fix them on `upgrade` and push.
 
-## GitHub setup (once)
+## GitHub Actions pipeline
 
-1. Create a **private** GitHub repo and push all three branches:
+```
+push upgrade  →  validate  →  push test
+push test     →  pack test (+ optional smoke)  →  push prod
+push prod     →  GitHub Release (client/server overlay zips)
+              →  Mac self-hosted runner: deploy.sh (Docker blue-green)
+```
+
+`deploy.sh` waits until **0 players**, then cuts over. It does **not** kick players. Failed new live boot restores pack from `prod-snapshot`.
+
+### One-time GitHub setup
+
+1. Create a **private** repo and push all three branches:
 
    ```bash
+   brew install gh   # if needed
+   gh auth login
    gh repo create atm10-server --private --source . --remote origin
    git push -u origin upgrade test prod
    ```
 
-2. Repo **Settings → Actions → General**: allow Actions, and allow Actions to **create and approve pull requests** is not required; workflows **push** `upgrade → test → prod` with `contents: write`.
+2. **Settings → Actions → General**: allow Actions. Workflows need `contents: write` (default `GITHUB_TOKEN` is enough to push branches).
 
-3. **Self-hosted runner** on the machine that runs Minecraft (same idea as your older 1.20.1 pack):
+3. **Self-hosted runner on this Mac** (Docker Desktop must be running):
 
-   - Label it `minecraft-prod` (prod deploy) and optionally `minecraft-test` (full boot smoke test).
-   - Copy `deploy.env.example` to `deploy.env` **on the runner host** (not in git). Point `LIVE_SERVER_DIR` at `/Users/enricokallaste/atm10-instances/prod` and `TEST_SERVER_DIR` at `.../test`.
+   - Repo → Settings → Actions → Runners → New self-hosted runner (macOS).
+   - Labels: `self-hosted` and **`minecraft-prod`** (required by `deploy-prod.yml`).
+   - Install runner as a service so it stays online.
+   - In the **atm10-server** checkout the runner uses (or next to `deploy.sh`), keep `deploy.env` + `.env` with `LIVE_SERVER_DIR`, `NEXT_SERVER_DIR`, `SNAPSHOT_DIR`.
 
-4. Secrets / variables:
+4. Variables (optional):
 
-   | Name | Where | Purpose |
-   | --- | --- | --- |
-   | `ENABLE_SMOKE_TEST` | Actions variable `true` | `test` also boots Minecraft on a runner labeled `minecraft-test` |
-   | `ENABLE_LIVE_DEPLOY` | Actions variable `true` | After overlay zips are published, restart the live server on `minecraft-prod` |
-   | (none required for promote) | | `GITHUB_TOKEN` is enough to push branches |
+   | Name | Purpose |
+   | --- | --- |
+   | `ENABLE_SMOKE_TEST=true` | Also boot Minecraft on a `minecraft-test` runner before promoting |
+   | `SKIP_LIVE_DEPLOY=true` | Publish overlay Release only; skip Docker cutover |
 
-   Set **ENABLE_LIVE_DEPLOY=true** only after the `minecraft-prod` runner is online, or the deploy job is skipped and you still get GitHub Release zips.
+Normal flow after setup: push (or merge) to **`upgrade`** and Actions carries it through **test → prod → live Docker** when the server is empty.
 
 ## Clients on PCs
 
@@ -106,8 +122,38 @@ Until you push to GitHub, generate a local overlay:
 ./scripts/build-overlays.sh
 ```
 
-## Local apply (no GitHub)
+## Live server (Docker on this Mac)
+
+Give Docker Desktop **enough RAM for two JVMs while next is booting** (~12G live + ~12G next), then next is stopped after cutover.
+
+First start (bind-mounts the live world; does not copy it):
 
 ```bash
-./scripts/apply-overlay.sh /path/to/ATM10-server-or-client-instance
+docker compose up -d --build
+docker compose logs -f minecraft
+```
+
+Players connect to this Mac on port **25565**. Container name: `atm10-live`.
+
+### Cutover after `test` is good
+
+```bash
+./scripts/promote-test-to-prod.sh
+```
+
+`deploy.sh` does **not** kick players:
+
+1. Snapshot live **pack** (mods/config/libraries, **not** `world/`) to `prod-snapshot`.
+2. Build `prod-next`, apply overlay, boot `atm10-next` on **127.0.0.1:25566** with an empty throwaway world.
+3. If next fails health-check, **stop next and leave live running**.
+4. If next is healthy, stop next (free RAM), then poll live player count until **0** (no timeout, no force restart).
+5. Stop live, apply overlay onto `prod` (**world stays**), start `atm10-live`, health-check.
+6. On success: stop next. On live boot failure: restore pack from snapshot, start live again.
+
+Rollback never replaces `prod/world`.
+
+Overlay any instance folder (clients, test):
+
+```bash
+./scripts/apply-overlay.sh /path/to/ATM10-instance
 ```

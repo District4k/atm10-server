@@ -13,6 +13,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Client/server overlay zips for players (CurseForge pack + this overlay).
   release-overlays:
     runs-on: ubuntu-latest
     steps:
@@ -33,15 +34,24 @@ jobs:
             dist/VERSION
           generate_release_notes: true
 
+  # Mac self-hosted runner: blue-green Docker cutover (wait for 0 players, rollback on fail).
   deploy-live:
-    if: vars.ENABLE_LIVE_DEPLOY == 'true'
+    if: vars.SKIP_LIVE_DEPLOY != 'true'
     needs: release-overlays
     runs-on: [self-hosted, minecraft-prod]
     steps:
       - uses: actions/checkout@v4
         with:
           ref: prod
-      - name: Restart live server with new prod
+          fetch-depth: 0
+      - name: Overlay and cut over Docker live when empty
+        timeout-minutes: 10080
         run: |
-          chmod +x scripts/*.sh
+          set -euo pipefail
+          chmod +x scripts/*.sh docker/entrypoint.sh
+          test -f deploy.env || test -f .env || {
+            echo "Missing deploy.env/.env on the runner (LIVE_SERVER_DIR, NEXT_SERVER_DIR, SNAPSHOT_DIR)"
+            exit 1
+          }
+          docker info >/dev/null
           ./scripts/deploy.sh

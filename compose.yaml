@@ -1,0 +1,59 @@
+name: atm10
+
+services:
+  minecraft:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: atm10-prod:8.2
+    container_name: atm10-live
+    restart: unless-stopped
+    working_dir: /data
+    stdin_open: true
+    tty: true
+    ports:
+      - "${MC_BIND:-0.0.0.0}:${MC_PORT:-25565}:25565"
+    volumes:
+      - ${LIVE_SERVER_DIR:?Set LIVE_SERVER_DIR in .env or the shell}:/data
+    environment:
+      ATM10_RESTART: "false"
+      TZ: ${TZ:-Europe/Tallinn}
+    mem_limit: ${MEM_LIMIT:-14g}
+    memswap_limit: ${MEM_LIMIT:-14g}
+    stop_signal: SIGINT
+    stop_grace_period: 90s
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/127.0.0.1/25565'"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+      start_period: 600s
+
+  minecraft-next:
+    profiles: ["next"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: atm10-prod:8.2
+    container_name: atm10-next
+    restart: "no"
+    working_dir: /data
+    stdin_open: true
+    tty: true
+    ports:
+      - "${MC_BIND:-127.0.0.1}:${NEXT_PORT:-25566}:25565"
+    volumes:
+      - ${NEXT_SERVER_DIR:?Set NEXT_SERVER_DIR in .env or the shell}:/data
+    environment:
+      ATM10_RESTART: "false"
+      TZ: ${TZ:-Europe/Tallinn}
+    mem_limit: ${MEM_LIMIT:-14g}
+    memswap_limit: ${MEM_LIMIT:-14g}
+    stop_signal: SIGINT
+    stop_grace_period: 90s
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/127.0.0.1/25565'"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+      start_period: 600s

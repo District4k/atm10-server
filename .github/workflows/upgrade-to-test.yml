@@ -1,5 +1,7 @@
 name: Upgrade to test
 
+# On push to upgrade: pack-check → push same SHA to test (which then can promote to prod).
+
 on:
   push:
     branches: [upgrade]

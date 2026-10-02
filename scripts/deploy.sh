@@ -1,67 +1,113 @@
 #!/usr/bin/env bash
-# Warn players, pull prod, overlay, restart the live ATM10 server.
+# Blue-green prod deploy: prepare next while live stays up, cut over only at 0 players,
+# roll back pack files (never the world) if the new live boot fails.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-if [[ -f "$ROOT/deploy.env" ]]; then
-  set -a
-  # shellcheck disable=SC1091
-  source "$ROOT/deploy.env"
-  set +a
-fi
-
-SCREEN_SESSION="${SCREEN_SESSION:-atm10}"
-LIVE_SERVER_DIR="${LIVE_SERVER_DIR:-$ROOT}"
-WARN_SECONDS="${WARN_SECONDS:-60}"
-DEPLOY_BRANCH="${DEPLOY_BRANCH:-prod}"
-
-screen_send() {
-  screen -S "$SCREEN_SESSION" -X stuff "$1"$'\n'
-}
-
-server_running() {
-  screen -list 2>/dev/null | grep -q "[.]${SCREEN_SESSION}[[:space:]]" || screen -list 2>/dev/null | grep -q "$SCREEN_SESSION"
-}
-
-echo "[deploy] $(date) branch=$DEPLOY_BRANCH dir=$LIVE_SERVER_DIR"
-
-if server_running; then
-  if (( WARN_SECONDS > 0 )); then
-    screen_send "say §c[Server] Update incoming! Restarting in ${WARN_SECONDS} seconds..."
-    sleep $(( WARN_SECONDS / 2 ))
-    screen_send "say §c[Server] Restarting in $((WARN_SECONDS / 2)) seconds!"
-    sleep $(( WARN_SECONDS / 2 - 10 ))
-    screen_send "say §c[Server] Restarting in 10 seconds!"
-    sleep 10
-  fi
-  screen_send "say §c[Server] Restarting now."
-  screen_send "stop"
-  for i in $(seq 1 90); do
-    sleep 1
-    if ! server_running; then
-      break
-    fi
-    if [[ "$i" -eq 90 ]]; then
-      screen -S "$SCREEN_SESSION" -X quit || true
+load_env() {
+  local f
+  for f in "$ROOT/deploy.env" "$ROOT/.env"; do
+    if [[ -f "$f" ]]; then
+      set -a
+      # shellcheck disable=SC1090
+      source "$f"
+      set +a
     fi
   done
+}
+load_env
+
+LIVE_SERVER_DIR="${LIVE_SERVER_DIR:-/Users/enricokallaste/atm10-instances/prod}"
+NEXT_SERVER_DIR="${NEXT_SERVER_DIR:-/Users/enricokallaste/atm10-instances/prod-next}"
+SNAPSHOT_DIR="${SNAPSHOT_DIR:-/Users/enricokallaste/atm10-instances/prod-snapshot}"
+STATUS_HOST="${STATUS_HOST:-127.0.0.1}"
+MC_PORT="${MC_PORT:-25565}"
+NEXT_PORT="${NEXT_PORT:-25566}"
+DEPLOY_BRANCH="${DEPLOY_BRANCH:-prod}"
+HEALTH_TIMEOUT="${HEALTH_TIMEOUT:-900}"
+
+COMPOSE=(docker compose --project-directory "$ROOT" -f "$ROOT/compose.yaml")
+LIVE_CTR=atm10-live
+NEXT_CTR=atm10-next
+
+live_running() {
+  docker inspect -f '{{.State.Running}}' "$LIVE_CTR" 2>/dev/null | grep -q true
+}
+
+if [[ "$NEXT_SERVER_DIR" == "$LIVE_SERVER_DIR" || "$SNAPSHOT_DIR" == "$LIVE_SERVER_DIR" ]]; then
+  echo "[deploy] NEXT/SNAPSHOT must not be the live directory" >&2
+  exit 1
+fi
+
+echo "[deploy] $(date) blue-green  live=$LIVE_SERVER_DIR"
+
+if ! command -v docker >/dev/null 2>&1; then
+  echo "[deploy] docker is not installed" >&2
+  exit 1
 fi
 
 cd "$ROOT"
+chmod +x "$ROOT/scripts/"*.sh "$ROOT/docker/entrypoint.sh" "$ROOT/scripts/mc-status.py"
+
 if git remote get-url origin >/dev/null 2>&1; then
   git fetch origin "$DEPLOY_BRANCH"
   git checkout "$DEPLOY_BRANCH"
   git reset --hard "origin/${DEPLOY_BRANCH}"
 fi
 
-"$ROOT/scripts/apply-overlay.sh" "$LIVE_SERVER_DIR"
+echo "[deploy] snapshot current pack (no world) -> $SNAPSHOT_DIR"
+"$ROOT/scripts/sync-pack.sh" "$LIVE_SERVER_DIR" "$SNAPSHOT_DIR"
 
-chmod +x "$LIVE_SERVER_DIR/run.sh" "$LIVE_SERVER_DIR/startserver.sh" 2>/dev/null || true
+echo "[deploy] prepare next instance (live keeps serving)"
+rm -rf "$NEXT_SERVER_DIR/world"
+"$ROOT/scripts/sync-pack.sh" "$LIVE_SERVER_DIR" "$NEXT_SERVER_DIR"
+"$ROOT/scripts/apply-overlay.sh" "$NEXT_SERVER_DIR"
+chmod +x "$NEXT_SERVER_DIR/startserver.sh" "$NEXT_SERVER_DIR/run.sh" 2>/dev/null || true
+rm -rf "$NEXT_SERVER_DIR/world"
+mkdir -p "$NEXT_SERVER_DIR/world" "$NEXT_SERVER_DIR/logs"
 
-echo "[deploy] starting screen session $SCREEN_SESSION"
-if [[ -f "$LIVE_SERVER_DIR/startserver.sh" ]]; then
-  screen -dmS "$SCREEN_SESSION" bash -lc "cd '$LIVE_SERVER_DIR' && ATM10_RESTART=false ./startserver.sh"
-else
-  screen -dmS "$SCREEN_SESSION" bash -lc "cd '$LIVE_SERVER_DIR' && ./run.sh nogui"
+echo "[deploy] boot next on :$NEXT_PORT (throwaway world, not the live world)"
+"${COMPOSE[@]}" --profile next up -d --build minecraft-next
+
+if ! "$ROOT/scripts/wait-healthy.sh" "$STATUS_HOST" "$NEXT_PORT" "$HEALTH_TIMEOUT"; then
+  echo "[deploy] next failed health-check — live unchanged"
+  "${COMPOSE[@]}" --profile next stop -t 90 minecraft-next || true
+  exit 1
 fi
-echo "[deploy] done"
+
+echo "[deploy] next healthy — stopping next to free RAM while live stays up"
+"${COMPOSE[@]}" --profile next stop -t 90 minecraft-next || true
+
+if live_running; then
+  echo "[deploy] next is healthy — waiting until live has 0 players"
+  "$ROOT/scripts/wait-empty.sh" "$STATUS_HOST" "$MC_PORT"
+else
+  echo "[deploy] live container is not running — no players to wait for"
+fi
+
+echo "[deploy] cut over: stop live, overlay live dir (world stays), start live"
+"${COMPOSE[@]}" stop -t 90 minecraft || true
+
+"$ROOT/scripts/apply-overlay.sh" "$LIVE_SERVER_DIR"
+chmod +x "$LIVE_SERVER_DIR/startserver.sh" "$LIVE_SERVER_DIR/run.sh" 2>/dev/null || true
+
+"${COMPOSE[@]}" up -d --build minecraft
+
+if "$ROOT/scripts/wait-healthy.sh" "$STATUS_HOST" "$MC_PORT" "$HEALTH_TIMEOUT"; then
+  echo "[deploy] live healthy"
+  echo "[deploy] done  container=$LIVE_CTR  world=$LIVE_SERVER_DIR/world"
+  exit 0
+fi
+
+echo "[deploy] new live failed — rolling back pack from snapshot (world untouched)"
+"${COMPOSE[@]}" stop -t 90 minecraft || true
+"$ROOT/scripts/sync-pack.sh" "$SNAPSHOT_DIR" "$LIVE_SERVER_DIR"
+"${COMPOSE[@]}" up -d --build minecraft
+"${COMPOSE[@]}" --profile next stop -t 90 minecraft-next || true
+
+if "$ROOT/scripts/wait-healthy.sh" "$STATUS_HOST" "$MC_PORT" "$HEALTH_TIMEOUT"; then
+  echo "[deploy] rollback live is healthy" >&2
+else
+  echo "[deploy] rollback live did not become healthy" >&2
+fi
+exit 1

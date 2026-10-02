@@ -1,5 +1,8 @@
 name: Test then promote to prod
 
+# After upgrade lands on test: pack-check → (optional smoke) → push same SHA to prod.
+# Pushing prod triggers Deploy prod (release zips + Docker live cutover on Mac).
+
 on:
   push:
     branches: [test]
@@ -42,4 +45,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Push test SHA to prod
-        run: git push origin "HEAD:prod"
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git push origin "HEAD:prod"

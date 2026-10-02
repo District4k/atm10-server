@@ -1,0 +1,25 @@
+# Version control
+.git/
+.github/
+
+# Docs and IDE
+*.md
+.idea/
+.vscode/
+.DS_Store
+
+# Env and secrets
+.env
+.env.*
+deploy.env
+
+# Live/test data must never enter the image
+custom/mods/*.jar
+dist/
+world/
+logs/
+
+# Avoid recursive Docker context
+Dockerfile*
+compose.yaml
+.dockerignore
